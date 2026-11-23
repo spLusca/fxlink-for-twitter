@@ -1,0 +1,33 @@
+
+name: FxLink CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: Validate and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate JavaScript
+        run: |
+          node --check content.js
+          node --check settings-bridge.js
+          node --check popup.js
+
+      - name: Validate manifest
+        run: |
+          node -e "JSON.parse(require('node:fs').readFileSync('manifest.json', 'utf8'))"
+
+      - name: Run automated tests
+        run: node --test tests/content.test.cjs
