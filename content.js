@@ -10,6 +10,38 @@
     "mobile.twitter.com"
   ]);
 
+  let isEnabled = true;
+
+  /**
+   * Updates the extension state when settings change.
+   *
+   * @param {MessageEvent} event - The received window message.
+   * @returns {void}
+   */
+  function handleSettingsMessage(event) {
+    if (event.source !== window) {
+      return;
+    }
+
+    const data = event.data;
+
+    if (
+      data?.source !== "fxlink-extension" ||
+      data?.type !== "SET_ENABLED"
+    ) {
+      return;
+    }
+
+    if (typeof data.enabled === "boolean") {
+      isEnabled = data.enabled;
+
+      console.debug(
+        "[FxLink] Automatic conversion:",
+        isEnabled ? "enabled" : "disabled"
+      );
+    }
+  }
+
   /**
    * Converts a Twitter post URL to an FxTwitter URL.
    *
@@ -17,6 +49,10 @@
    * @returns {string|null} The converted URL or null.
    */
   function convertTwitterUrl(text) {
+    if (!isEnabled) {
+      return null;
+    }
+
     if (typeof text !== "string") {
       return null;
     }
@@ -59,6 +95,10 @@
    * @returns {void}
    */
   function handleCopy(event) {
+    if (!isEnabled) {
+      return;
+    }
+
     const selectedText = window.getSelection()?.toString();
 
     const convertedUrl = convertTwitterUrl(selectedText);
@@ -70,7 +110,10 @@
     event.clipboardData.setData("text/plain", convertedUrl);
     event.preventDefault();
 
-    console.debug("[FxLink] Converted copied URL:", convertedUrl);
+    console.debug(
+      "[FxLink] Converted copied URL:",
+      convertedUrl
+    );
   }
 
   /**
@@ -92,17 +135,43 @@
         const convertedUrl = convertTwitterUrl(text);
 
         if (convertedUrl) {
-          console.debug("[FxLink] Converted clipboard URL:", convertedUrl);
+          console.debug(
+            "[FxLink] Converted clipboard URL:",
+            convertedUrl
+          );
         }
 
         return originalWriteText(convertedUrl ?? text);
       };
     } catch (error) {
-      console.warn("[FxLink] Clipboard interception unavailable:", error);
+      console.warn(
+        "[FxLink] Clipboard interception unavailable:",
+        error
+      );
     }
   }
 
-  document.addEventListener("copy", handleCopy, true);
+  /**
+   * Initializes the extension functionality.
+   *
+   * @returns {void}
+   */
+  function initialize() {
+    window.addEventListener(
+      "message",
+      handleSettingsMessage
+    );
 
-  interceptClipboardApi();
+    document.addEventListener(
+      "copy",
+      handleCopy,
+      true
+    );
+
+    interceptClipboardApi();
+
+    console.debug("[FxLink] Extension initialized.");
+  }
+
+  initialize();
 })();

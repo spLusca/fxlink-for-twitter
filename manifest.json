@@ -2,8 +2,15 @@
 {
   "manifest_version": 3,
   "name": "FxLink for Twitter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Automatically converts copied Twitter post links to FxTwitter URLs.",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "FxLink Settings"
+  },
   "content_scripts": [
     {
       "matches": [
@@ -16,6 +23,18 @@
       "js": ["content.js"],
       "run_at": "document_start",
       "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://www.x.com/*",
+        "https://twitter.com/*",
+        "https://www.twitter.com/*",
+        "https://mobile.twitter.com/*"
+      ],
+      "js": ["settings-bridge.js"],
+      "run_at": "document_start",
+      "world": "ISOLATED"
     }
   ]
 }
